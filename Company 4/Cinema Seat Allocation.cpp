@@ -1,26 +1,42 @@
 class Solution {
 public:
-    // 3 4 3
-    // 4- 11|11 or 1111 
-    // 發現 unordered_map<int,int> 會 Memory Limit Exceeded ...
-    // 改用 vector<char> 還是會 Memory Limit Exceeded ...
     int maxNumberOfFamilies(int n, vector<vector<int>>& reservedSeats) {
-        unordered_map<int,char> masks;
-        for(int i=0;i<reservedSeats.size();i++){
-            int row=reservedSeats[i][0];
-            int col=reservedSeats[i][1];
-            if(col>1 && col<10) masks[row-1]|=(1<<(col-2));
+        int result = 0;
+        sort(reservedSeats.begin(), reservedSeats.end());
+
+        int prerow = 0;
+        int p = 0;
+        
+        while(p < reservedSeats.size()){
+            vector<int> iv(10, 0);
+            int curstart = reservedSeats[p][0]; 
+            iv[reservedSeats[p][1] - 1] = 1;
+            result += (curstart - 1 - prerow) * 2;
+            
+            p++;
+            while(p < reservedSeats.size() && curstart == reservedSeats[p][0]){
+                iv[reservedSeats[p][1] - 1] = 1; p++;
+            }
+
+            vector<int> dp(10, 0);
+            
+            for(int i = 4; i <= 8; i++){
+                if((i == 4 || i == 8 || i == 6) && (iv[i] == 0 && iv[i - 1] == 0 && iv[i - 2] == 0 && iv[i - 3] == 0)){
+                        dp[i] = max(1 + dp[i - 4], dp[i - 1]);
+                }
+                else {
+                    dp[i] = dp[i - 1];
+                }
+            }
+            result += dp[8];
+            prerow = curstart;
+
+            // printf("prerow %d, result %d\n", prerow, result);
         }
-        int max_seat=n*2;
-        int res=0;
-        for(auto &[row,seat]:masks){
-            // 11-11 優先 在來 1111
-            // 算出不能做的seats
-            bool left=seat&0b11110000;
-            bool right=seat&0b00001111;
-            bool mid=seat&0b00111100;
-            res+=left&&right&&mid?2:1;
-        }
-        return max_seat-res;
+
+
+        result += (n - prerow) * 2;
+
+        return result;
     }
 };
